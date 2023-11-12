@@ -25,6 +25,7 @@ import time
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 import threading
 import rich
+import winshell
    
 # --- Initialize colorama ---
 colorama.init(autoreset=True)
@@ -43,17 +44,37 @@ def clear_screen():
         
 # --- Desktop Shortcut Creation ---
 def create_shortcut():
-    desktop = winshell.desktop()
-    path = os.path.join(desktop, "Network Diagnostics.lnk")
-    target = os.path.abspath(sys.argv[0])
-    icon = os.path.abspath(target)  # Replace this with a specific icon if desired
+    try:
+        desktop = winshell.desktop()
+        shortcut_path = os.path.join(desktop, "Network Diagnostics.lnk")
 
-    shortcut = winshell.shortcut()
-    shortcut.path = target
-    shortcut.icon_location = (icon, 0)
-    shortcut.description = "Network Diagnostics Shortcut"
-    shortcut.working_directory = os.path.dirname(target)
-    shortcut.write(path)
+        # Check if the shortcut already exists
+        if not os.path.exists(shortcut_path):
+            print("Creating a new desktop shortcut...")
+
+            # Path to Python executable
+            python_exe = sys.executable
+
+            # Path to your script
+            script_path = os.path.abspath(sys.argv[0])
+
+            # Path to your icon file
+            icon_path = os.path.join(os.path.dirname(script_path), "icon.ico")
+
+            # Create shortcut to Python executable with script as argument
+            shortcut = winshell.shortcut(shortcut_path)
+            shortcut.path = python_exe
+            shortcut.arguments = f'"{script_path}"'
+            shortcut.icon_location = (icon_path, 0)  # Use the specific icon
+            shortcut.description = "Network Diagnostics Shortcut"
+            shortcut.working_directory = os.path.dirname(script_path)
+            shortcut.write()
+
+            print("Shortcut created successfully.")
+        else:
+            print("Shortcut already exists. No new shortcut was created.")
+    except Exception as e:
+        print(f"Error creating shortcut: {e}")
 
 # --- Display Script Name ---
 def display_script_name():
@@ -434,6 +455,7 @@ global_settings = {}
 
 # --- Main Function ---
 def main():
+    create_shortcut()
     global global_settings
     global_settings = load_settings()
     display_script_name()
