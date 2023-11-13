@@ -5,7 +5,7 @@ import os
 import json
 
 def install_required_packages():
-    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts"]
+    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts", "pywin32"]
     for package in packages:
         try:
             __import__(package)
