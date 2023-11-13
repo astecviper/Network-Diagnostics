@@ -1,4 +1,9 @@
 # --- Package Installation ---
+import subprocess
+import sys
+import os
+import json
+
 def install_required_packages():
     packages = ["art", "requests", "speedtest-cli", "plyer", "winshell", "colorama", "rich"]
     for package in packages:
@@ -10,10 +15,6 @@ def install_required_packages():
             print(f"Requirement already satisfied: {package}")
 
 # --- Imports ---
-import subprocess
-import sys
-import os
-import json
 from datetime import datetime, timedelta
 from art import text2art
 import requests
@@ -26,6 +27,7 @@ from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 import threading
 import rich
 import winshell
+import art
    
 # --- Initialize colorama ---
 colorama.init(autoreset=True)
