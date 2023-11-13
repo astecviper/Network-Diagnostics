@@ -5,7 +5,7 @@ import os
 import json
 
 def install_required_packages():
-    packages = ["art", "requests", "speedtest-cli", "plyer", "winshell", "colorama", "rich"]
+    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts"]
     for package in packages:
         try:
             __import__(package)
@@ -29,8 +29,9 @@ import time
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 import threading
 import rich
-import winshell
 import art
+from pyshortcuts import make_shortcut
+from pathlib import Path
    
 # --- Initialize colorama ---
 colorama.init(autoreset=True)
@@ -43,39 +44,24 @@ def clear_screen():
         _ = os.system('clear')
     display_script_name()
         
-# --- Desktop Shortcut Creation ---
-def create_shortcut():
+# --- Create Shortcut ---
+def create_shortcut(shortcut_name):
     try:
-        desktop = winshell.desktop()
-        shortcut_path = os.path.join(desktop, "Network Diagnostics.lnk")
+        script_path = Path(__file__).resolve()
+        icon_path = script_path.parent / "icon.ico"
 
-        # Check if the shortcut already exists
-        if not os.path.exists(shortcut_path):
-            print("Creating a new desktop shortcut...")
+        # Use the make_shortcut function to create the shortcut on the desktop
+        make_shortcut(
+            script=str(script_path),
+            name=shortcut_name,
+            icon=str(icon_path),
+            terminal=False,  # Set to True if you want to open a terminal
+            desktop=True,  # This will ensure the shortcut is created on the desktop
+        )
+        print(f"Shortcut '{shortcut_name}' created successfully on the desktop.")
 
-            # Path to Python executable
-            python_exe = sys.executable
-
-            # Path to your script
-            script_path = os.path.abspath(sys.argv[0])
-
-            # Path to your icon file
-            icon_path = os.path.join(os.path.dirname(script_path), "icon.ico")
-
-            # Create shortcut to Python executable with script as argument
-            shortcut = winshell.shortcut(shortcut_path)
-            shortcut.path = python_exe
-            shortcut.arguments = f'"{script_path}"'
-            shortcut.icon_location = (icon_path, 0)  # Use the specific icon
-            shortcut.description = "Network Diagnostics Shortcut"
-            shortcut.working_directory = os.path.dirname(script_path)
-            shortcut.write()
-
-            print("Shortcut created successfully.")
-        else:
-            print("Shortcut already exists. No new shortcut was created.")
     except Exception as e:
-        print(f"Error creating shortcut: {e}")
+        print(f"Error in shortcut creation process: {e}")
 
 # --- Display Script Name ---
 def display_script_name():
@@ -456,7 +442,7 @@ global_settings = {}
 
 # --- Main Function ---
 def main():
-    create_shortcut()
+    create_shortcut("Network Diagnostics")
     global global_settings
     global_settings = load_settings()
     display_script_name()
