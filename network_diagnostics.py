@@ -13,6 +13,9 @@ def install_required_packages():
             subprocess.check_call([sys.executable, "-m", "pip", "install", package])
         else:
             print(f"Requirement already satisfied: {package}")
+install_required_packages()
+
+print("Package installation completed. Running the script...")
 
 # --- Imports ---
 from datetime import datetime, timedelta
@@ -31,10 +34,6 @@ import art
    
 # --- Initialize colorama ---
 colorama.init(autoreset=True)
-
-install_required_packages()
-
-print("Package installation completed. Running the script...")
 
 # --- Clear Screen Function ---
 def clear_screen():
