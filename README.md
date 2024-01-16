@@ -8,7 +8,7 @@ Requirements:
 
 Initial Setup:
 1. Install Python 3.12:
-   - Download Python 3.12 from the official website: https://www.python.org/downloads/
+   - Download Python 3.12 from the official website: [https://www.python.org/downloads/](https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe)
    - During installation, ensure to check the option 'Add Python 3.12 to PATH'.
 
 2. Download and Extract the Network Diagnostics Tool:
