@@ -13,7 +13,7 @@ Initial Setup:
 
 2. Download and Extract the Network Diagnostics Tool:
    - Download the ZIP file from the GitHub repository or clone it using Git.
-   - Extract the files to a folder of your choice.
+   - Extract the files to a folder of your choice (make sure that it is located in a local directory not managed by a cloud service like OneDrive).
 
 Running the Test for the First Time:
 1. Open the Command Prompt or Terminal in the folder where you extracted the Network Diagnostics Tool.
