@@ -1,23 +1,7 @@
-# --- Package Installation ---
+# --- Imports ---
 import subprocess
-import sys
 import os
 import json
-
-def install_required_packages():
-    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts", "pywin32"]
-    for package in packages:
-        try:
-            __import__(package)
-        except ImportError:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        else:
-            print(f"Requirement already satisfied: {package}")
-install_required_packages()
-
-print("Package installation completed. Running the script...")
-
-# --- Imports ---
 from datetime import datetime, timedelta
 from art import text2art
 import requests
@@ -32,11 +16,51 @@ import rich
 import art
 from pyshortcuts import make_shortcut
 from pathlib import Path
-   
-# --- Logging Setup ---
 import logging
 from pathlib import Path
 from datetime import datetime
+import win32com.client
+import sys
+import logging
+os.system('title Network Diagnostics')
+
+# --- Library Installation ---
+def install_required_packages():
+    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts", "pywin32"]
+    for package in packages:
+        try:
+            __import__(package)
+        except ImportError:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        else:
+            print(f"Requirement already satisfied: {package}")
+
+    print("Package installation completed.")
+
+# --- Create Shortcut ---
+def create_shortcut(shortcut_name, script_name='network_diagnostics.py'):
+    logging.info(f"Creating shortcut: {shortcut_name}")
+    try:
+        script_dir = Path(__file__).resolve().parent
+        script_path = script_dir / script_name
+        icon_path = script_dir / "icon.ico"
+        desktop_path = os.path.join(os.environ["USERPROFILE"], "Desktop")
+
+        # Assuming Python is added to PATH. Alternatively, provide the full path to python.exe
+        python_executable = sys.executable
+
+        shell = win32com.client.Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortcut(os.path.join(desktop_path, f"{shortcut_name}.lnk"))
+        shortcut.TargetPath = python_executable
+        shortcut.Arguments = f'"{str(script_path)}"'
+        shortcut.WorkingDirectory = str(script_dir)
+        shortcut.IconLocation = str(icon_path)
+        shortcut.save()
+        logging.info(f"Shortcut '{shortcut_name}' created successfully on the desktop.")
+    except Exception as e:
+        logging.error(f"Error in shortcut creation process: {e}")
+   
+# --- Logging Setup ---
 
 # Get the directory of the current script
 script_directory = Path(__file__).parent
@@ -78,24 +102,6 @@ def clear_screen():
         logging.error(f"Error clearing screen: {e}")
     finally:
         display_script_name()
-        
-# --- Create Shortcut ---
-def create_shortcut(shortcut_name):
-    logging.info(f"Creating shortcut: {shortcut_name}")
-    try:
-        script_path = Path(__file__).resolve()
-        icon_path = script_path.parent / "icon.ico"
-
-        make_shortcut(
-            script=str(script_path),
-            name=shortcut_name,
-            icon=str(icon_path),
-            terminal=False,  
-            desktop=True,  
-        )
-        logging.info(f"Shortcut '{shortcut_name}' created successfully on the desktop.")
-    except Exception as e:
-        logging.error(f"Error in shortcut creation process: {e}")
 
 # --- Display Script Name ---
 def display_script_name():
@@ -340,18 +346,36 @@ def display_summary(results):
         print("---------------------------------------")
     print("=========== End of Summary ===========\n")
     logging.debug("Network diagnostic summary displayed")
+    summary_menu()
 
+# --- New Summary Menu ---
+def summary_menu():
+    logging.info("Displaying summary menu")
+    while True:
+        print("\n============ Summary Menu ============")
+        print("1. Return to Main Menu")
+        print("0. Exit Script")
+        choice = input("Enter your choice: ")
+        if choice == '1':
+            return True  # Return to Main Menu
+        elif choice == '0':
+            print("Exiting the script...")
+            exit()  # Exit the script
+        else:
+            print("Invalid choice, please try again.")
+        logging.debug("Summary menu action completed")
+        
 # --- Post-Test Menu ---
 def post_test_menu():
     logging.info("Displaying post-test menu")
     while True:
         print("\n============ Results Menu ============")
         print("1. Return to Main Menu")
-        print("2. Show Results")
+        print("0. Show Results")
         choice = input("Enter your choice: ")
         if choice == '1':
             return True  # Return to Main Menu
-        elif choice == '2':
+        elif choice == '0':
             return False  # Exit the script
         logging.debug("Post-test menu action completed")
 
@@ -557,7 +581,6 @@ def main_menu():
                 save_results(results)  # Save the test results
                 if 'Speedtest' in results:
                     show_completion_notification(results['Speedtest'])  # Show speed test notification if available
-                input("\nPress Enter to return to the main menu...")  # Wait for user input before returning to the main menu or exiting
 
             elif choice == '2':
                 logging.info("Accessing settings")
@@ -574,12 +597,20 @@ global_settings = {}
 # --- Main Function ---
 def main():
     logging.info("Starting main function")
-    create_shortcut("Network Diagnostics")
-    global global_settings
-    global_settings = load_settings()
-    display_script_name()
-    main_menu()
-    logging.info("Exiting script")
+
+    if "--setup" in sys.argv:
+        install_required_packages()
+        create_shortcut("Network Diagnostics")
+        print("Script installation completed.")
+        clear_screen()
+        input("Press Enter to exit the script...")
+        
+    else:
+        global global_settings
+        global_settings = load_settings()
+        display_script_name()
+        main_menu()
+        logging.info("Exiting script")
 
 if __name__ == '__main__':
     main()
