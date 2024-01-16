@@ -34,8 +34,9 @@ from pyshortcuts import make_shortcut
 from pathlib import Path
    
 # --- Logging Setup ---
-from rich.logging import RichHandler
 import logging
+from pathlib import Path
+from datetime import datetime
 
 # Get the directory of the current script
 script_directory = Path(__file__).parent
@@ -58,7 +59,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.FileHandler('path_to_log_file', mode='a')  # Update 'path_to_log_file' with your log file path
+        logging.FileHandler(full_log_path, mode='a')  # Corrected to use the full_log_path variable
     ]
 )
 
@@ -428,13 +429,13 @@ def manage_settings():
             # Options for Test Preferences and Notification Settings
             print("1. Test Preferences")
             print("2. Notification Settings")
-            print("3. Back")
+            print("0. Back")
             choice = input("Enter your choice: ")
             if choice == '1':
                 settings['test_preferences'] = manage_test_preferences(settings.get('test_preferences', {}))
             elif choice == '2':
                 settings['notification_settings'] = manage_notification_settings(settings.get('notification_settings', {}))
-            elif choice == '3':
+            elif choice == '0':
                 break
         save_settings(settings)
         logging.info("Settings management completed successfully")
@@ -507,14 +508,14 @@ def manage_notification_settings(current_notifications):
 
             print(f"1. Enable Notifications{enabled_selected}")
             print(f"2. Disable Notifications{disabled_selected}")
-            print("3. Back")
+            print("0. Back")
 
             notification_choice = input("Enter your choice: ")
             if notification_choice == '1':
                 current_notifications['enabled'] = True
             elif notification_choice == '2':
                 current_notifications['enabled'] = False
-            elif notification_choice == '3':
+            elif notification_choice == '0':
                 break
 
         logging.info("Notification settings updated")
@@ -533,7 +534,7 @@ def main_menu():
             print("\n==================== Main Menu ====================")
             print("1. Run Now")
             print("2. Settings")
-            print("3. Exit")
+            print("0. Exit")
             choice = input("Enter your choice: ")
 
             if choice == '1':
@@ -561,7 +562,7 @@ def main_menu():
             elif choice == '2':
                 logging.info("Accessing settings")
                 manage_settings()
-            elif choice == '3':
+            elif choice == '0':
                 logging.info("Exiting main menu")
                 break
         except Exception as e:

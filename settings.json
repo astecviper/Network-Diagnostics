@@ -1,0 +1,14 @@
+{
+    "notification_settings": {
+        "enabled": false
+    },
+    "test_preferences": {
+        "Ping": "Enabled",
+        "Traceroute": "Enabled",
+        "IP Configuration": "Enabled",
+        "DNS Flush": "Enabled",
+        "Nslookup": "Enabled",
+        "Netstat": "Enabled",
+        "Speedtest": "Enabled"
+    }
+}
