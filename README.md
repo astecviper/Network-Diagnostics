@@ -17,18 +17,11 @@ This document provides instructions on setting up and running the Network Diagno
 
 **Running the Test for the First Time:**
 1. Navigate to the folder where you extracted the Network Diagnostics Tool.
-2. Right-click on "Setup.bat" and select "Run as administrator" to execute it with administrative privileges. This step is crucial for the correct setup of the tool.
+2. Right-click on "setup.bat" and select "Run as administrator" to execute it with administrative privileges. This step is crucial for the correct setup of the tool.
 3. Once the setup is complete, locate the newly created desktop shortcut named 'Network Diagnostics'.
 4. Right-click on this shortcut, select 'Properties', then go to the 'Shortcut' tab.
 5. Click on 'Advanced...' and check the box for 'Run as administrator' to ensure the tool always runs with the necessary privileges.
 6. Apply these settings by clicking Apply and then Ok.
-
-**Setting Up the Desktop Shortcut:**
-1. Locate the 'Network Diagnostics' shortcut on your desktop.
-2. Right-click on the shortcut and select 'Properties'.
-3. In the Properties window, go to the 'Shortcut' tab.
-4. Click on 'Advanced...' and then check the box for 'Run as administrator'.
-5. Click OK and Apply to save these settings.
    
 **Using Network Diagnostics:**
 You're all set! You can now run network diagnostics tests directly from the desktop shortcut with administrative privileges.
