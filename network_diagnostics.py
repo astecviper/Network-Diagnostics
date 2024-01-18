@@ -1,7 +1,23 @@
-# --- Imports ---
+# --- Package Installation ---
 import subprocess
+import sys
 import os
 import json
+
+def install_required_packages():
+        packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts", "pywin32"]
+        for package in packages:
+            try:
+                __import__(package)
+            except ImportError:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+            else:
+                print(f"Requirement already satisfied: {package}")
+
+
+print("Package installation completed. Running the script...")
+
+# --- Imports ---
 from datetime import datetime, timedelta
 from art import text2art
 import requests
@@ -16,51 +32,14 @@ import rich
 import art
 from pyshortcuts import make_shortcut
 from pathlib import Path
+   
+# --- Logging Setup ---
 import logging
 from pathlib import Path
 from datetime import datetime
-import win32com.client
-import sys
-import logging
-os.system('title Network Diagnostics')
 
-# --- Library Installation ---
-def install_required_packages():
-    packages = ["art", "requests", "speedtest-cli", "plyer", "colorama", "rich", "pyshortcuts", "pywin32"]
-    for package in packages:
-        try:
-            __import__(package)
-        except ImportError:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        else:
-            print(f"Requirement already satisfied: {package}")
-
-    print("Package installation completed.")
-
-# --- Create Shortcut ---
-def create_shortcut(shortcut_name, script_name='network_diagnostics.py'):
-    logging.info(f"Creating shortcut: {shortcut_name}")
-    try:
-        script_dir = Path(__file__).resolve().parent
-        script_path = script_dir / script_name
-        icon_path = script_dir / "icon.ico"
-        desktop_path = os.path.join(os.environ["USERPROFILE"], "Desktop")
-
-        # Assuming Python is added to PATH. Alternatively, provide the full path to python.exe
-        python_executable = sys.executable
-
-        shell = win32com.client.Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortcut(os.path.join(desktop_path, f"{shortcut_name}.lnk"))
-        shortcut.TargetPath = python_executable
-        shortcut.Arguments = f'"{str(script_path)}"'
-        shortcut.WorkingDirectory = str(script_dir)
-        shortcut.IconLocation = str(icon_path)
-        shortcut.save()
-        logging.info(f"Shortcut '{shortcut_name}' created successfully on the desktop.")
-    except Exception as e:
-        logging.error(f"Error in shortcut creation process: {e}")
-   
-# --- Logging Setup ---
+# Disable logging
+logging.disable(logging.CRITICAL)
 
 # Get the directory of the current script
 script_directory = Path(__file__).parent
@@ -77,15 +56,17 @@ log_filename = current_time.strftime("log-%m-%d-%Y-%H-%M.txt")  # Replaced ':' w
 # Full path for the log file
 full_log_path = logs_directory / log_filename
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.FileHandler(full_log_path, mode='a')  # Corrected to use the full_log_path variable
-    ]
-)
+# Check if logging is enabled for the DEBUG level
+if logging.getLogger().isEnabledFor(logging.DEBUG):
+    # Configure logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.FileHandler(full_log_path, mode='a')  # Corrected to use the full_log_path variable
+        ]
+    )
 
 # --- Initialize colorama ---
 colorama.init(autoreset=True)
@@ -102,6 +83,24 @@ def clear_screen():
         logging.error(f"Error clearing screen: {e}")
     finally:
         display_script_name()
+        
+# --- Create Shortcut ---
+def create_shortcut(shortcut_name):
+    logging.info(f"Creating shortcut: {shortcut_name}")
+    try:
+        script_path = Path(__file__).resolve()
+        icon_path = script_path.parent / "icon.ico"
+
+        make_shortcut(
+            script=str(script_path),
+            name=shortcut_name,
+            icon=str(icon_path),
+            terminal=False,  
+            desktop=True,  
+        )
+        logging.info(f"Shortcut '{shortcut_name}' created successfully on the desktop.")
+    except Exception as e:
+        logging.error(f"Error in shortcut creation process: {e}")
 
 # --- Display Script Name ---
 def display_script_name():
@@ -323,86 +322,140 @@ def run_network_tests(settings):
 def display_summary(results):
     logging.info("Displaying network diagnostic summary")
     print("\n===== Network Diagnostic Summary =====")
-    for test, data in results.items():
+    for index, (test, data) in enumerate(results.items()):
         if isinstance(data, dict):
             # For both simple and complex tests
             result = data.get('result', 'N/A')
             duration = data.get('duration', 'N/A')
-            print(f"{test}: {result}")
-            print(f"Execution Time: {duration}")
-            
+            print(f"\n{test}:\n")
+            print(f"  Result: {result}\n")
+            print(f"  Execution Time: {duration}\n")
+
             # If this is the Speedtest, include additional details
             if test == 'Speedtest' and result == "Completed":
                 download_speed = data.get('Download', 'N/A')
                 upload_speed = data.get('Upload', 'N/A')
                 ping = data.get('Ping', 'N/A')
-                print(f"Download Speed: {download_speed:.2f} Mbps")
-                print(f"Upload Speed: {upload_speed:.2f} Mbps")
-                print(f"Ping: {ping} ms")
+                print(f"  Download Speed: {download_speed:.2f} Mbps")
+                print(f"  Upload Speed: {upload_speed:.2f} Mbps")
+                print(f"  Ping: {ping} ms")
 
+            # Print a divider after each test summary except the last one
+            if index < len(results) - 1:
+                print("--------------------------------------\n")
         else:
             # Fallback for unexpected formats
             print(f"{test}: {data}")
-        print("---------------------------------------")
+            if index < len(results) - 1:
+                print("--------------------------------------\n")
+                
     print("=========== End of Summary ===========\n")
     logging.debug("Network diagnostic summary displayed")
-    summary_menu()
 
-# --- New Summary Menu ---
-def summary_menu():
-    logging.info("Displaying summary menu")
-    while True:
-        print("\n============ Summary Menu ============")
-        print("1. Return to Main Menu")
-        print("0. Exit Script")
-        choice = input("Enter your choice: ")
-        if choice == '1':
-            return True  # Return to Main Menu
-        elif choice == '0':
-            print("Exiting the script...")
-            exit()  # Exit the script
-        else:
-            print("Invalid choice, please try again.")
-        logging.debug("Summary menu action completed")
-        
 # --- Post-Test Menu ---
-def post_test_menu():
+def post_test_menu(results):
     logging.info("Displaying post-test menu")
     while True:
-        print("\n============ Results Menu ============")
+        clear_screen()
+        print("\n============== Summary ===============")  # Header for the summary
+        for index, (test, data) in enumerate(results.items()):
+            if isinstance(data, dict):
+                # For both simple and complex tests
+                result = data.get('result', 'N/A')
+                duration = data.get('duration', 'N/A')
+                print(f"{test}: {result}")
+                print(f"Execution Time: {duration}")
+
+                # If this is the Speedtest, include additional details
+                if test == 'Speedtest' and result == "Completed":
+                    download_speed = data.get('Download', 'N/A')
+                    upload_speed = data.get('Upload', 'N/A')
+                    ping = data.get('Ping', 'N/A')
+                    print(f"Download Speed: {download_speed:.2f} Mbps")
+                    print(f"Upload Speed: {upload_speed:.2f} Mbps")
+                    print(f"Ping: {ping} ms")
+
+                # Print a divider after each test summary except the last one
+                if index < len(results) - 1:
+                    print("--------------------------------------")
+            else:
+                # Fallback for unexpected formats
+                print(f"{test}: {data}")
+                if index < len(results) - 1:
+                    print("--------------------------------------")
+
+        # Ensure no newline is printed before the menu header
+        print("============ Summary Menu ============")  # Header for the menu
         print("1. Return to Main Menu")
-        print("0. Show Results")
+        print("0. Exit")
         choice = input("Enter your choice: ")
-        if choice == '1':
+        try:
+            choice = int(choice)
+        except ValueError:
+            logging.debug("Invalid input, clearing screen and redisplaying menu")
+            continue
+
+        if choice == 1:
             return True  # Return to Main Menu
-        elif choice == '0':
-            return False  # Exit the script
-        logging.debug("Post-test menu action completed")
+        elif choice == 0:
+            logging.info("Exiting script")
+            sys.exit(0)  # Exit the script
+        else:
+            logging.debug("Invalid input, clearing screen and redisplaying menu")
+
+# --- Post-Summary Menu ---
+def post_summary_menu(results):
+    logging.info("Displaying post-summary menu")
+    while True:
+        clear_screen()
+        print("\n============ Post-Summary Menu ============")
+        print("1. Return to Main Menu")
+        print("0. Exit")  # Added an option to exit the script
+        choice = input("Enter your choice: ")
+        try:
+            choice = int(choice)
+        except ValueError:
+            logging.debug("Invalid input, clearing screen and redisplaying menu")
+            continue
+
+        if choice == 1:
+            return True  # Return to Main Menu
+        elif choice == 0:
+            logging.info("Exiting script")
+            sys.exit(0)  # Exit the script
+        else:
+            logging.debug("Invalid input, clearing screen and redisplaying menu")
 
 # --- Save Results ---
-from datetime import datetime  # Import the datetime class from the datetime module
+def save_results(results, settings):
+    save_enabled = settings.get('save_summaries', {}).get('enabled', False)  # Adjust the key as per your settings structure
+    logging_enabled = settings.get('logging_settings', {}).get('enabled', True)  # Adjust the key as per your settings structure
 
-def save_results(results):
-    logging.info("Saving network diagnostic results")
-    results_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Results')
-    if not os.path.exists(results_folder):
-        os.makedirs(results_folder)
-    file_name = os.path.join(results_folder, f"Results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
-    try:
-        with open(file_name, 'w') as file:
-            for test, data in results.items():
-                file.write(f"{test}:\n")
-                if isinstance(data, dict):
-                    for key, value in data.items():
-                        file.write(f"  - {key}: {value}\n")
-                else:
-                    file.write(f"  Result: {data}\n")
-                file.write("--------------------------------------\n")
-            file.write("\n===== End of Results =====\n")
-        print(f"Results successfully saved.\n")
-        logging.info("Notification displayed successfully")
-    except Exception as e:
-        logging.error(f"Error displaying notification: {e}")
+    if save_enabled and logging_enabled:
+        logging.info("Saving network diagnostic results")
+        results_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Results')
+        if not os.path.exists(results_folder):
+            os.makedirs(results_folder)
+        file_name = os.path.join(results_folder, f"Results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+        try:
+            with open(file_name, 'w') as file:
+                for test, data in results.items():
+                    file.write(f"{test}:\n")
+                    if isinstance(data, dict):
+                        for key, value in data.items():
+                            file.write(f"  - {key}: {value}\n")
+                    else:
+                        file.write(f"  Result: {data}\n")
+                    file.write("--------------------------------------\n")
+                file.write("\n===== End of Results =====\n")
+            print(f"Results successfully saved at {file_name}\n")
+            logging.info("Results saved successfully")
+        except Exception as e:
+            logging.error(f"Error saving results: {e}")
+    elif not logging_enabled:
+        logging.info("Logging is disabled, not saving results.")
+    else:
+        logging.info("Saving results is disabled in settings.")
     
 # --- Display Notifications ---
 def show_completion_notification(results):
@@ -450,22 +503,26 @@ def manage_settings():
         while True:
             clear_screen()
             print("\n==================== Settings Menu ====================")
-            # Options for Test Preferences and Notification Settings
             print("1. Test Preferences")
             print("2. Notification Settings")
+            print("3. Save Summaries")
+            print("4. Logging Settings")  # Add this line
             print("0. Back")
             choice = input("Enter your choice: ")
             if choice == '1':
                 settings['test_preferences'] = manage_test_preferences(settings.get('test_preferences', {}))
             elif choice == '2':
                 settings['notification_settings'] = manage_notification_settings(settings.get('notification_settings', {}))
+            elif choice == '3':
+                settings['save_summaries'] = manage_save_summaries_settings(settings.get('save_summaries', {}))
+            elif choice == '4':  # Add this line
+                settings['logging_settings'] = manage_logging_settings(settings.get('logging_settings', {}))
             elif choice == '0':
                 break
         save_settings(settings)
         logging.info("Settings management completed successfully")
     except Exception as e:
         logging.error(f"Error in settings management: {e}")
-
 # --- Load Settings ---
 def load_settings():
     logging.info("Loading settings")
@@ -520,6 +577,35 @@ def manage_test_preferences(current_preferences):
         logging.error(f"Error managing test preferences: {e}")
         return current_preferences
 
+# --- Logging Settings Management ---
+def manage_logging_settings(current_logging):
+    logging.info("Managing logging settings")
+    try:
+        while True:
+            clear_screen()
+            print("\n==================== Logging Settings ====================")
+            enabled_selected = f"{Fore.GREEN}<--{Style.RESET_ALL}" if current_logging.get('enabled', False) else ""
+            disabled_selected = f"{Fore.RED}<--{Style.RESET_ALL}" if not current_logging.get('enabled', False) else ""
+
+            print(f"1. Enable Logging{enabled_selected}")
+            print(f"2. Disable Logging{disabled_selected}")
+            print("0. Back")
+
+            logging_choice = input("Enter your choice: ")
+            if logging_choice == '1':
+                current_logging['enabled'] = True
+            elif logging_choice == '2':
+                current_logging['enabled'] = False
+            elif logging_choice == '0':
+                break
+
+        logging.info("Logging settings updated")
+        save_settings(current_logging)  # Save the updated logging settings
+        return current_logging
+    except Exception as e:
+        logging.error(f"Error managing logging settings: {e}")
+        return current_logging
+    
 # --- Notification Settings Management ---
 def manage_notification_settings(current_notifications):
     logging.info("Managing notification settings")
@@ -548,8 +634,37 @@ def manage_notification_settings(current_notifications):
         logging.error(f"Error managing notification settings: {e}")
         return current_notifications
 
+# --- Save Summaries Management ---
+def manage_save_summaries_settings(current_settings):
+    logging.info("Managing save summaries settings")
+    try:
+        while True:
+            clear_screen()
+            print("\n==================== Save Summaries Settings ====================")
+            enabled_selected = f"{Fore.GREEN}<--{Style.RESET_ALL}" if current_settings.get('enabled', False) else ""
+            disabled_selected = f"{Fore.RED}<--{Style.RESET_ALL}" if not current_settings.get('enabled', False) else ""
+
+            print(f"1. Enable Save Summaries{enabled_selected}")
+            print(f"2. Disable Save Summaries{disabled_selected}")
+            print("0. Back")
+
+            choice = input("Enter your choice: ")
+            if choice == '1':
+                current_settings['enabled'] = True
+            elif choice == '2':
+                current_settings['enabled'] = False
+            elif choice == '0':
+                break
+
+        logging.info("Save summaries settings updated")
+        return current_settings
+    except Exception as e:
+        logging.error(f"Error managing save summaries settings: {e}")
+        return current_settings
+    
 # --- Main Menu Logic ---
 def main_menu():
+    print("main_menu called") # Added this line
     global global_settings
     while True:
         logging.info("Displaying main menu")
@@ -563,28 +678,24 @@ def main_menu():
 
             if choice == '1':
                 logging.info("Running network tests chosen")
-                settings = load_settings()  # Load current settings
                 print("Please wait, running tests...")
-                results = run_network_tests(settings)
-                # Tests are done, now show the results menu
-                continue_to_main = post_test_menu()  # Show post-test menu and capture user's choice
-                
+                results = run_network_tests(global_settings)
+
+                display_summary(results)  # Always display the summary
+                save_results(results, global_settings)  # Save results based on settings
+
+                continue_to_main = post_test_menu(results)  # Show post-test menu and capture user's choice
+
                 if continue_to_main:
-                    # The user wants to go back to the main menu
-                    # No need to clear the screen here, as it will be cleared at the beginning of the loop
-                    continue
-                
-                # If the user chooses to exit, we show the summary and wait for input before closing
-                clear_screen()  # Clear the screen before showing the summary
-                # The script title is assumed to be displayed automatically, so it's not included here
-                display_summary(results)  # Display the test summary
-                save_results(results)  # Save the test results
-                if 'Speedtest' in results:
-                    show_completion_notification(results['Speedtest'])  # Show speed test notification if available
+                    continue  # The user wants to go back to the main menu
+
+                clear_screen()
+                input("\nPress Enter to return to the main menu...")  # Wait for user input
 
             elif choice == '2':
                 logging.info("Accessing settings")
                 manage_settings()
+                global_settings = load_settings()  # Reload settings after managing them
             elif choice == '0':
                 logging.info("Exiting main menu")
                 break
@@ -592,26 +703,55 @@ def main_menu():
             logging.error(f"Error in main menu: {e}")
 
 # --- Global Variable for Settings ---
-global_settings = {}
+global_settings = {
+    'test_preferences': {},
+    'notification_settings': {'enabled': False},
+    'save_summaries': {'enabled': False},
+    'logging_settings': {'enabled': True}
+}
 
 # --- Main Function ---
-def main():
+def main(setup=False):
     logging.info("Starting main function")
-
-    if "--setup" in sys.argv:
-        install_required_packages()
+    if setup:
         create_shortcut("Network Diagnostics")
-        print("Script installation completed.")
-        clear_screen()
-        input("Press Enter to exit the script...")
-        
+        install_required_packages()  # Pass setup argument here
     else:
-        global global_settings
-        global_settings = load_settings()
         display_script_name()
+        global_settings = load_settings()
+
+        # Configure logging based on settings
+        logging_settings = global_settings.get('logging_settings', {})
+        logging_enabled = logging_settings.get('enabled', True)
+        if logging_enabled:
+            logs_directory = Path(__file__).parent / 'Logs'
+            if not logs_directory.exists():
+                logs_directory.mkdir()
+
+            current_time = datetime.now()
+            log_filename = current_time.strftime("log-%m-%d-%Y-%H-%M.txt")  # Replaced ':' with '-'
+            full_log_path = logs_directory / log_filename
+
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format="%(asctime)s %(levelname)s %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                handlers=[
+                    logging.FileHandler(full_log_path, mode='a')
+                ]
+            )
+        else:
+            logging.basicConfig(level=logging.CRITICAL)  # Disable logging when it's disabled in settings
+
         main_menu()
-        logging.info("Exiting script")
+    logging.info("Exiting script")
 
 if __name__ == '__main__':
-    main()
+    import sys
 
+    if len(sys.argv) > 1 and sys.argv[1] == '--setup':
+        main(setup=True)
+    else:
+        global_settings = load_settings()
+        display_script_name()
+        main()
